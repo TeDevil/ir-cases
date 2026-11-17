@@ -1,0 +1,717 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="病例库">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#1f4e79">
+<meta name="format-detection" content="telephone=no">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<title>介入病例库 · 手机建档</title>
+<style>
+:root{
+  --blue:#1f4e79; --blue-d:#163a5a; --bg:#f4f6f9; --card:#fff;
+  --line:#dfe4ea; --ink:#1f2d3d; --sub:#6b7a8d; --warn:#b7791f;
+  --ok:#276749; --danger:#c0392b;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg); color:var(--ink);
+  font:16px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",
+       "PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  padding-bottom:calc(64px + env(safe-area-inset-bottom));
+  -webkit-text-size-adjust:100%;
+}
+
+/* ---------- 顶栏 ---------- */
+header{
+  position:sticky;top:0;z-index:20;
+  background:var(--blue);color:#fff;
+  padding:calc(10px + env(safe-area-inset-top)) 14px 10px;
+  display:flex;align-items:center;gap:10px;
+}
+header h1{font-size:16px;margin:0;font-weight:600;flex:1;}
+#net{
+  font-size:11.5px;font-weight:400;padding:2px 8px;border-radius:20px;
+  background:rgba(255,255,255,.16);white-space:nowrap;
+}
+#net.ok{background:rgba(255,255,255,.22);}
+#net.warn{background:#b7791f;}
+
+/* ---------- 卡片 ---------- */
+main{padding:12px;}
+.card{
+  background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:14px;margin-bottom:12px;
+}
+.card h2{
+  font-size:13px;margin:0 0 12px;color:var(--blue);font-weight:600;
+  padding-left:9px;border-left:3px solid var(--blue);
+}
+.hint{font-size:12.5px;color:var(--sub);line-height:1.7;margin:6px 0 0;}
+
+/* ---------- 表单 ---------- */
+label.f{display:block;margin-bottom:14px;}
+label.f > span.lb{
+  display:block;font-size:13px;color:var(--sub);margin-bottom:6px;
+}
+label.f > span.lb b{color:var(--danger);font-weight:400;}
+input[type=text],input[type=number],input[type=date],select,textarea{
+  width:100%;padding:12px;font-size:16px; /* 16px 才不会被 iOS 放大 */
+  border:1px solid #cfd8e3;border-radius:9px;background:#fff;color:var(--ink);
+  font-family:inherit;
+}
+input:focus,select:focus,textarea:focus{
+  outline:none;border-color:var(--blue);box-shadow:0 0 0 3px #e3eefa;
+}
+textarea{min-height:76px;resize:vertical;line-height:1.6;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* 选项块 */
+.chips{display:flex;flex-wrap:wrap;gap:8px;}
+.chip{
+  padding:9px 15px;border:1px solid #cfd8e3;border-radius:20px;
+  background:#fff;font-size:14px;color:var(--ink);user-select:none;
+}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff;}
+.chip:active{transform:translateY(1px);}
+
+/* 按钮 */
+.btn{
+  display:block;width:100%;padding:15px;border-radius:10px;border:none;
+  font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;
+}
+.btn.pri{background:var(--blue);color:#fff;}
+.btn.alt{background:#fff;border:1px solid #cfd8e3;color:var(--blue);}
+.btn.danger{background:#fff;border:1px solid #f0c2c2;color:var(--danger);}
+.btn:active{transform:translateY(1px);}
+.btnrow{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+
+/* ---------- 列表 ---------- */
+.item{
+  background:#fff;border:1px solid var(--line);border-radius:12px;
+  padding:12px 14px;margin-bottom:10px;
+}
+.item .t1{font-size:12px;color:var(--sub);display:flex;gap:8px;
+          align-items:center;margin-bottom:4px;}
+.item .t2{font-size:15.5px;font-weight:600;line-height:1.4;}
+.item .t3{font-size:13px;color:var(--sub);margin-top:5px;}
+.badge{
+  font-size:11px;padding:1px 7px;border-radius:5px;background:#eef4fa;
+  color:var(--blue);
+}
+.item .acts{display:flex;gap:8px;margin-top:10px;}
+.item .acts button{
+  flex:1;padding:9px 0;font-size:13.5px;border-radius:8px;font-family:inherit;
+  border:1px solid #cfd8e3;background:#fff;color:var(--blue);
+}
+.item .acts button.del{color:var(--danger);border-color:#f0c2c2;}
+
+.empty{text-align:center;color:var(--sub);font-size:14px;padding:44px 20px;}
+
+/* ---------- 底部选项卡 ---------- */
+nav.tabs{
+  position:fixed;left:0;right:0;bottom:0;z-index:20;
+  display:grid;grid-template-columns:repeat(3,1fr);
+  background:#fff;border-top:1px solid var(--line);
+  padding-bottom:env(safe-area-inset-bottom);
+}
+nav.tabs button{
+  padding:9px 0 8px;border:none;background:none;font-family:inherit;
+  font-size:11.5px;color:var(--sub);display:flex;flex-direction:column;
+  align-items:center;gap:3px;
+}
+nav.tabs button .ic{font-size:19px;line-height:1;}
+nav.tabs button.on{color:var(--blue);font-weight:600;}
+nav.tabs .dot{
+  position:absolute;transform:translate(13px,-7px);
+  background:var(--danger);color:#fff;font-size:10px;
+  min-width:16px;height:16px;line-height:16px;border-radius:9px;
+  text-align:center;padding:0 3px;
+}
+
+/* ---------- 提示条 ---------- */
+.flash{
+  background:#eef4fa;border:1px solid #cfe0f0;border-radius:10px;
+  padding:11px 13px;font-size:13.5px;color:#2c4a66;margin-bottom:12px;
+}
+.flash.ok{background:#f1f8f2;border-color:#bcdcc2;color:var(--ok);}
+.flash.warn{background:#fdf8ec;border-color:#eddcb4;color:var(--warn);}
+pre.out{
+  background:#0f1a24;color:#d8e2ec;border-radius:9px;padding:12px;
+  font-size:12px;line-height:1.7;overflow:auto;max-height:260px;
+  white-space:pre-wrap;word-break:break-all;margin:10px 0 0;
+}
+code{background:#eef1f4;padding:1px 5px;border-radius:4px;font-size:12.5px;}
+.hide{display:none !important;}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>介入病例库</h1>
+  <span id="net">检查中…</span>
+</header>
+
+<main>
+
+<!-- ================= 新建 ================= -->
+<section id="v-new">
+  <div class="flash">
+    这里<strong>不填姓名、住院号、电话</strong>。只记性别、年龄、诊断、术式和要点。
+    数据先存在这台手机里，回电脑上导入。
+  </div>
+
+  <div class="card">
+    <h2>必须填（10 秒）</h2>
+
+    <label class="f"><span class="lb">性别 <b>*</b></span>
+      <div class="chips" id="c-sex"></div>
+    </label>
+
+    <div class="row2">
+      <label class="f"><span class="lb">年龄 <b>*</b></span>
+        <input type="number" id="f-age" inputmode="numeric" min="0" max="120"
+               placeholder="62">
+      </label>
+      <label class="f"><span class="lb">手术日期</span>
+        <input type="date" id="f-date">
+      </label>
+    </div>
+
+    <label class="f"><span class="lb">主诊断 <b>*</b></span>
+      <input type="text" id="f-dx" placeholder="肝细胞癌">
+    </label>
+
+    <label class="f"><span class="lb">一句话亮点</span>
+      <input type="text" id="f-title" placeholder="巨块型 HCC 超选右膈动脉栓塞">
+    </label>
+  </div>
+
+  <div class="card">
+    <h2>能填就填（可选）</h2>
+
+    <label class="f"><span class="lb">病种大类</span>
+      <select id="f-cat"></select>
+    </label>
+
+    <label class="f"><span class="lb">病种</span>
+      <select id="f-type"></select>
+    </label>
+
+    <label class="f"><span class="lb">术式</span>
+      <select id="f-op"></select>
+    </label>
+
+    <div class="row2">
+      <label class="f"><span class="lb">术者</span>
+        <input type="text" id="f-opr" placeholder="张医生">
+      </label>
+      <label class="f"><span class="lb">难度</span>
+        <select id="f-diff"></select>
+      </label>
+    </div>
+
+    <label class="f"><span class="lb">标签（可多选）</span>
+      <div class="chips" id="c-tags"></div>
+    </label>
+
+    <label class="f" style="margin-bottom:0"><span class="lb">教学要点 / 备注</span>
+      <textarea id="f-tp" placeholder="右膈动脉参与供血是常见的漏栓来源。"></textarea>
+    </label>
+  </div>
+
+  <button class="btn pri" id="btn-save">保存到手机</button>
+  <p class="hint">
+    保存后出现在「待上传」里。点右上角的图标通知栏可以看到已有多少条。
+  </p>
+</section>
+
+<!-- ================= 待上传 ================= -->
+<section id="v-list" class="hide">
+  <div id="list-flash"></div>
+  <div id="list-body"></div>
+</section>
+
+<!-- ================= 设置 / 导出 ================= -->
+<section id="v-set" class="hide">
+  <div class="card">
+    <h2>导出到电脑</h2>
+    <p class="hint" style="margin-top:0">
+      手机和电脑不在同一个网络也能用 —— 导出后拿到电脑那边导入即可。
+    </p>
+    <div class="btnrow" style="margin-top:12px">
+      <button class="btn alt" id="btn-json">导出 JSON 文件</button>
+      <button class="btn alt" id="btn-text">复制一行一例</button>
+    </div>
+    <p class="hint">
+      <strong>推荐用 JSON</strong>：字段完整（含病种、标签、教学要点），
+      电脑端「批量导入」可以直接选这个文件。<br>
+      「一行一例」是纯文本，粘到电脑端的批量导入框里也能用，但只带 7 个字段。
+    </p>
+    <pre class="out hide" id="text-out"></pre>
+  </div>
+
+  <div class="card">
+    <h2>备份与恢复</h2>
+    <p class="hint" style="margin-top:0">
+      换手机、清缓存前先导出一次 JSON 存好。
+    </p>
+    <div class="btnrow" style="margin-top:12px">
+      <button class="btn alt" id="btn-backup">导出备份</button>
+      <button class="btn alt" id="btn-restore">从备份恢复</button>
+    </div>
+    <input type="file" id="file-restore" accept=".json,application/json" class="hide">
+  </div>
+
+  <div class="card">
+    <h2>状态</h2>
+    <p class="hint" style="margin-top:0" id="stat"></p>
+    <button class="btn danger" id="btn-clear" style="margin-top:12px">
+      清空本机所有记录
+    </button>
+    <p class="hint">
+      ⚠ 清空后无法恢复。清之前先导出备份。
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>这是什么</h2>
+    <p class="hint" style="margin-top:0">
+      这是介入病例库的<strong>手机离线建档</strong>版本。<br>
+      它是一个纯静态网页，托管在 GitHub Pages 上：
+      <strong>服务器上只有程序，没有任何病例数据</strong>。<br>
+      你录的每一条都只存在这台手机的浏览器里，直到你导出为止。<br><br>
+      完整功能（分期、随访、影像、导出报表）在电脑端的病例库里。
+    </p>
+  </div>
+</section>
+
+</main>
+
+<nav class="tabs">
+  <button data-v="new" class="on"><span class="ic">＋</span>新建</button>
+  <button data-v="list"><span class="ic">☰</span>待上传<span class="dot hide" id="tab-dot">0</span></button>
+  <button data-v="set"><span class="ic">⇩</span>导出</button>
+</nav>
+
+<script>
+/* ============================================================
+   字典由 scripts/build_mobile_pwa.py 从 cases/choices.py 生成。
+   【不要手改下面这一行】，改了会被下次构建覆盖。
+   ============================================================ */
+/*__CHOICES__*/
+
+var LS_KEY = "ir_cases_pwa_v1";
+var LS_DRAFT = "ir_cases_pwa_draft_v1";
+
+/* ---------- 存储 ---------- */
+function loadAll(){
+  try{ return JSON.parse(localStorage.getItem(LS_KEY) || "[]") || []; }
+  catch(e){ return []; }
+}
+function saveAll(list){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(list)); return true; }
+  catch(e){ alert("保存失败：手机存储可能满了。请先导出并清理。"); return false; }
+}
+function newId(){
+  return "c" + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+}
+
+/* ---------- 视图切换 ---------- */
+var VIEWS = {new:"v-new", list:"v-list", set:"v-set"};
+function show(v){
+  Object.keys(VIEWS).forEach(function(k){
+    document.getElementById(VIEWS[k]).classList.toggle("hide", k !== v);
+  });
+  document.querySelectorAll("nav.tabs button").forEach(function(b){
+    b.classList.toggle("on", b.getAttribute("data-v") === v);
+  });
+  if (v === "list") renderList();
+  if (v === "set") renderStat();
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("nav.tabs button").forEach(function(b){
+  b.addEventListener("click", function(){ show(b.getAttribute("data-v")); });
+});
+
+/* ---------- 选项渲染 ---------- */
+var picked = { sex:"", tags:[] };
+
+function fillSelect(el, values, placeholder){
+  el.innerHTML = "";
+  var o = document.createElement("option");
+  o.value = ""; o.textContent = placeholder || "（不填）";
+  el.appendChild(o);
+  values.forEach(function(v){
+    var x = document.createElement("option");
+    x.value = v; x.textContent = v;
+    el.appendChild(x);
+  });
+}
+
+function buildChips(host, values, single){
+  host.innerHTML = "";
+  values.forEach(function(v){
+    var b = document.createElement("span");
+    b.className = "chip";
+    b.textContent = v;
+    b.addEventListener("click", function(){
+      if (single){
+        picked.sex = (picked.sex === v) ? "" : v;
+        host.querySelectorAll(".chip").forEach(function(c){
+          c.classList.toggle("on", c.textContent === picked.sex);
+        });
+      } else {
+        var i = picked.tags.indexOf(v);
+        if (i >= 0) picked.tags.splice(i,1); else picked.tags.push(v);
+        b.classList.toggle("on", picked.tags.indexOf(v) >= 0);
+      }
+    });
+    host.appendChild(b);
+  });
+}
+
+function buildTypeSelect(){
+  var cat = document.getElementById("f-cat").value;
+  var types = (CHOICES.types[cat] || []);
+  fillSelect(document.getElementById("f-type"), types, "（先选大类）");
+  document.getElementById("f-type").disabled = !cat;
+}
+
+function initForm(){
+  buildChips(document.getElementById("c-sex"), CHOICES.sex, true);
+  buildChips(document.getElementById("c-tags"), CHOICES.tags, false);
+
+  fillSelect(document.getElementById("f-cat"), CHOICES.categories, "（不填）");
+  fillSelect(document.getElementById("f-op"), CHOICES.op_type, "（不填）");
+  fillSelect(document.getElementById("f-diff"), CHOICES.difficulty, "（不填）");
+  buildTypeSelect();
+
+  document.getElementById("f-cat").addEventListener("change", buildTypeSelect);
+
+  var d = new Date();
+  var iso = d.getFullYear() + "-" +
+            String(d.getMonth()+1).padStart(2,"0") + "-" +
+            String(d.getDate()).padStart(2,"0");
+  document.getElementById("f-date").value = iso;
+
+  // 恢复上次未保存的草稿（被电话打断时很有用）
+  try{
+    var dr = JSON.parse(localStorage.getItem(LS_DRAFT) || "null");
+    if (dr && dr.values){
+      var v = dr.values;
+      picked.sex = v.sex || "";
+      picked.tags = v.tags || [];
+      document.querySelectorAll("#c-sex .chip").forEach(function(c){
+        c.classList.toggle("on", c.textContent === picked.sex);
+      });
+      document.querySelectorAll("#c-tags .chip").forEach(function(c){
+        c.classList.toggle("on", picked.tags.indexOf(c.textContent) >= 0);
+      });
+      ["age","dx","title","opr","tp","date"].forEach(function(k){
+        var el = document.getElementById("f-" + k);
+        if (el && v[k] != null) el.value = v[k];
+      });
+      var cat = document.getElementById("f-cat");
+      if (v.cat){ cat.value = v.cat; buildTypeSelect(); }
+      ["type","op","diff"].forEach(function(k){
+        var el = document.getElementById("f-" + k);
+        if (el && v[k]) el.value = v[k];
+      });
+    }
+  }catch(e){}
+}
+
+function saveDraft(){
+  var v = readForm();
+  try{ localStorage.setItem(LS_DRAFT, JSON.stringify({values:v})); }catch(e){}
+}
+
+function readForm(){
+  return {
+    sex: picked.sex,
+    tags: picked.tags.slice(),
+    age: document.getElementById("f-age").value.trim(),
+    dx: document.getElementById("f-dx").value.trim(),
+    title: document.getElementById("f-title").value.trim(),
+    cat: document.getElementById("f-cat").value,
+    type: document.getElementById("f-type").value,
+    op: document.getElementById("f-op").value,
+    opr: document.getElementById("f-opr").value.trim(),
+    diff: document.getElementById("f-diff").value,
+    tp: document.getElementById("f-tp").value.trim(),
+    date: document.getElementById("f-date").value
+  };
+}
+
+function resetForm(){
+  picked.sex = ""; picked.tags = [];
+  document.querySelectorAll("#c-sex .chip, #c-tags .chip").forEach(function(c){
+    c.classList.remove("on");
+  });
+  ["age","dx","title","opr","tp"].forEach(function(k){
+    document.getElementById("f-" + k).value = "";
+  });
+  ["cat","type","op","diff"].forEach(function(k){
+    document.getElementById("f-" + k).value = "";
+  });
+  buildTypeSelect();
+  try{ localStorage.removeItem(LS_DRAFT); }catch(e){}
+}
+
+/* ---------- 保存 ---------- */
+document.getElementById("btn-save").addEventListener("click", function(){
+  var v = readForm();
+  var miss = [];
+  if (!v.sex) miss.push("性别");
+  if (!v.age) miss.push("年龄");
+  if (!v.dx) miss.push("主诊断");
+  if (miss.length){ alert("还差：" + miss.join("、")); return; }
+
+  var age = parseInt(v.age, 10);
+  if (isNaN(age) || age < 0 || age > 120){ alert("年龄要在 0–120 之间"); return; }
+
+  var rec = {
+    id: newId(),
+    sex: v.sex, age: age, diagnosis: v.dx,
+    category: v.cat, disease_type: v.type,
+    title: v.title, op_type: v.op,
+    operator: v.opr, difficulty: v.diff,
+    tags: v.tags, teaching_point: v.tp,
+    op_date: v.date,
+    created_at: new Date().toISOString()
+  };
+  var list = loadAll();
+  list.unshift(rec);
+  if (!saveAll(list)) return;
+
+  resetForm();
+  flash("已保存。现在是第 " + list.length + " 条，回电脑上导入。");
+  updateDot();
+  show("list");
+});
+
+/* ---------- 列表 ---------- */
+function renderList(){
+  var list = loadAll();
+  var body = document.getElementById("list-body");
+  if (!list.length){
+    body.innerHTML = '<div class="empty">还没有记录。<br>' +
+                     '点下面的「＋ 新建」开始。</div>';
+    updateDot();
+    return;
+  }
+  body.innerHTML = "";
+  list.forEach(function(r){
+    var d = document.createElement("div");
+    d.className = "item";
+    var bits = [];
+    if (r.category) bits.push(r.category);
+    if (r.op_type) bits.push(r.op_type);
+    d.innerHTML =
+      '<div class="t1">' +
+        '<span class="badge">' + esc(r.sex) + " " + esc(String(r.age)) + "岁</span>" +
+        '<span>' + esc(r.op_date || "未填日期") + '</span>' +
+        (r.operator ? '<span>术者 ' + esc(r.operator) + '</span>' : '') +
+      '</div>' +
+      '<div class="t2">' + esc(r.title || r.diagnosis) + '</div>' +
+      '<div class="t3">' + esc(r.diagnosis) +
+        (bits.length ? ' · ' + esc(bits.join(" · ")) : '') + '</div>' +
+      '<div class="acts">' +
+        '<button data-act="del">删除</button>' +
+      '</div>';
+    d.querySelector('[data-act="del"]').addEventListener("click", function(){
+      if (!confirm("删除这一条？删了不能恢复。")) return;
+      var l = loadAll().filter(function(x){ return x.id !== r.id; });
+      saveAll(l); renderList(); updateDot();
+    });
+    body.appendChild(d);
+  });
+  updateDot();
+}
+
+function updateDot(){
+  var n = loadAll().length;
+  var dot = document.getElementById("tab-dot");
+  dot.textContent = n;
+  dot.classList.toggle("hide", n === 0);
+}
+
+function flash(msg, kind){
+  var host = document.getElementById("list-flash");
+  if (!host) return;
+  host.innerHTML = '<div class="flash ' + (kind || "ok") + '">' + esc(msg) + '</div>';
+  setTimeout(function(){ host.innerHTML = ""; }, 4000);
+}
+
+function esc(s){
+  return String(s == null ? "" : s)
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;");
+}
+
+/* ---------- 导出 ---------- */
+function stamp(){
+  var d = new Date();
+  return d.getFullYear() + String(d.getMonth()+1).padStart(2,"0") +
+         String(d.getDate()).padStart(2,"0");
+}
+
+function download(name, text, type){
+  var blob = new Blob([text], {type: type || "application/json"});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); a.remove(); }, 1000);
+}
+
+document.getElementById("btn-json").addEventListener("click", function(){
+  var list = loadAll();
+  if (!list.length){ alert("还没有记录。"); return; }
+  var payload = {
+    format: "ir-case-pwa",
+    version: 1,
+    exported_at: new Date().toISOString(),
+    count: list.length,
+    cases: list
+  };
+  download("介入病例库-" + stamp() + ".json",
+           JSON.stringify(payload, null, 1), "application/json");
+});
+
+document.getElementById("btn-backup").addEventListener("click", function(){
+  var list = loadAll();
+  if (!list.length){ alert("还没有记录。"); return; }
+  download("病例库备份-" + stamp() + ".json",
+           JSON.stringify({format:"ir-case-pwa", version:1,
+                           exported_at:new Date().toISOString(),
+                           cases:list}, null, 1), "application/json");
+});
+
+/* 一行一例：性别 | 年龄 | 诊断 | 亮点 | 术式 | 术者 | 日期 */
+function toLines(list){
+  return list.map(function(r){
+    return [r.sex, r.age, r.diagnosis, r.title || "",
+            r.op_type || "", r.operator || "", r.op_date || ""].join(" | ");
+  }).join("\n");
+}
+
+document.getElementById("btn-text").addEventListener("click", function(){
+  var list = loadAll();
+  if (!list.length){ alert("还没有记录。"); return; }
+  var text = toLines(list);
+
+  var out = document.getElementById("text-out");
+  out.textContent = text;
+  out.classList.remove("hide");
+
+  if (navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(function(){
+      flash("已复制 " + list.length + " 条到剪贴板。", "ok");
+    }).catch(function(){
+      flash("复制失败，请手动长按上面的文本全选复制。", "warn");
+    });
+  } else {
+    flash("请长按上面的文本全选复制。", "warn");
+  }
+});
+
+/* ---------- 恢复 ---------- */
+document.getElementById("btn-restore").addEventListener("click", function(){
+  document.getElementById("file-restore").click();
+});
+
+document.getElementById("file-restore").addEventListener("change", function(e){
+  var f = e.target.files && e.target.files[0];
+  if (!f) return;
+  var rd = new FileReader();
+  rd.onload = function(){
+    try{
+      var data = JSON.parse(rd.result);
+      var incoming = data.cases || data;
+      if (!Array.isArray(incoming)) throw new Error("格式不对");
+      var cur = loadAll();
+      var have = {};
+      cur.forEach(function(x){ have[x.id] = 1; });
+      var added = 0;
+      incoming.forEach(function(x){
+        if (x && x.id && !have[x.id]){ cur.push(x); added++; }
+        else if (x && !x.id){ x.id = newId(); cur.push(x); added++; }
+      });
+      saveAll(cur);
+      renderList(); updateDot();
+      flash("恢复了 " + added + " 条（已存在的不重复）。", "ok");
+    }catch(err){
+      alert("读不了这个文件：" + err.message);
+    }
+    e.target.value = "";
+  };
+  rd.readAsText(f);
+});
+
+/* ---------- 清空 ---------- */
+document.getElementById("btn-clear").addEventListener("click", function(){
+  var n = loadAll().length;
+  if (!n){ alert("已经是空的。"); return; }
+  if (!confirm("要清空 " + n + " 条记录吗？\n清空后无法恢复，建议先导出备份。")) return;
+  if (!confirm("再确认一次：真的清空？")) return;
+  saveAll([]);
+  updateDot(); renderStat();
+  alert("已清空。");
+});
+
+/* ---------- 状态 ---------- */
+function renderStat(){
+  var list = loadAll();
+  var n = list.length;
+  var first = list.length ? list[list.length-1].created_at : "";
+  var last = list.length ? list[0].created_at : "";
+  function fmt(iso){
+    if (!iso) return "—";
+    try{ return new Date(iso).toLocaleString("zh-CN"); }catch(e){ return iso; }
+  }
+  var sw = ("serviceWorker" in navigator && window.isSecureContext)
+    ? "已启用（断网也能打开）" : "未启用（需要 https 地址）";
+  document.getElementById("stat").innerHTML =
+    "本机记录：<strong>" + n + "</strong> 条<br>" +
+    "最早：" + esc(fmt(first)) + "<br>" +
+    "最新：" + esc(fmt(last)) + "<br>" +
+    "离线缓存：" + esc(sw) + "<br>" +
+    "地址：" + esc(location.href);
+}
+
+/* ---------- Service Worker ---------- */
+(function(){
+  var el = document.getElementById("net");
+  if (!("serviceWorker" in navigator)){
+    el.textContent = "不支持离线"; el.className = "warn";
+    return;
+  }
+  if (!window.isSecureContext){
+    el.textContent = "需 https"; el.className = "warn";
+    return;
+  }
+  navigator.serviceWorker.register("sw.js").then(function(){
+    el.textContent = "离线可用"; el.className = "ok";
+  }).catch(function(){
+    el.textContent = "缓存失败"; el.className = "warn";
+  });
+})();
+
+/* ---------- 启动 ---------- */
+initForm();
+updateDot();
+["f-age","f-dx","f-title","f-opr","f-tp"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", saveDraft);
+});
+</script>
+</body>
+</html>
